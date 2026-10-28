@@ -1,0 +1,63 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  firefox:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Set manifest version from tag
+        run: |
+          V="${GITHUB_REF_NAME#v}"
+          node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('manifest.json','utf8'));m.version=process.env.V;fs.writeFileSync('manifest.json',JSON.stringify(m,null,2)+'\n')"
+        env:
+          V: ${{ github.ref_name }}
+
+      - run: npx --yes web-ext@8 lint --source-dir .
+
+      - name: Sign and submit to AMO (listed)
+        run: npx --yes web-ext@8 sign --channel=listed --source-dir .
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.AMO_API_KEY }}
+          WEB_EXT_API_SECRET: ${{ secrets.AMO_API_SECRET }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firefox-xpi
+          path: web-ext-artifacts/*
+
+  chrome:
+    runs-on: ubuntu-latest
+    if: ${{ vars.ENABLE_CHROME == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Set manifest version from tag
+        run: |
+          V="${GITHUB_REF_NAME#v}"
+          node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('manifest.json','utf8'));m.version=process.env.V;fs.writeFileSync('manifest.json',JSON.stringify(m,null,2)+'\n')"
+        env:
+          V: ${{ github.ref_name }}
+
+      - run: npx --yes web-ext@8 build --source-dir . --overwrite-dest --filename chrome.zip
+
+      - name: Upload and publish to Chrome Web Store
+        run: >
+          npx --yes chrome-webstore-upload-cli@3 upload
+          --source web-ext-artifacts/chrome.zip
+          --auto-publish
+        env:
+          EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
+          CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
