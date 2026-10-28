@@ -6,7 +6,10 @@
 
 Browser extension (MV3, Firefox + Chrome) for the self-hosted [Tailboard](https://github.com/Gren-95/tailboard) dashboard.
 
-![The dashboard shown as the new-tab page](docs/screenshot.png)
+<p>
+  <img src="docs/popup.png" alt="Toolbar popup: search and grouped links" height="320">
+  <img src="docs/screenshot.png" alt="Dashboard shown as the new-tab page" height="320">
+</p>
 
 ## Features
 
