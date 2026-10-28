@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "Tailboard Companion",
+  "version": "0.1.0",
+  "description": "New-tab dashboard, popup search, omnibox, and right-click launcher for your self-hosted Tailboard.",
+  "permissions": ["storage", "contextMenus", "tabs", "alarms"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "src/background.js",
+    "scripts": ["src/background.js"]
+  },
+  "action": {
+    "default_title": "Tailboard",
+    "default_popup": "src/popup/popup.html"
+  },
+  "options_ui": {
+    "page": "src/options/options.html",
+    "open_in_tab": true
+  },
+  "chrome_url_overrides": {
+    "newtab": "src/newtab/newtab.html"
+  },
+  "omnibox": { "keyword": "tb" },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Space"
+      },
+      "description": "Open Tailboard search"
+    }
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "tailboard-companion@beesrv.local",
+      "strict_min_version": "121.0"
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "tailboard-companion",
+  "version": "0.1.0",
+  "description": "Companion browser extension for the self-hosted Tailboard dashboard.",
+  "private": true,
+  "scripts": {
+    "start:firefox": "web-ext run --source-dir .",
+    "lint": "web-ext lint --source-dir .",
+    "build": "web-ext build --source-dir . --overwrite-dest"
+  },
+  "devDependencies": {
+    "web-ext": "^8.3.0"
+  }
+}

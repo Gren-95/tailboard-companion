@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>New Tab</title>
+  <style>
+    :root { color-scheme: light dark; }
+    html, body { margin:0; height:100%; background:#0c0a09; }
+    #frame { border:0; width:100%; height:100vh; display:block; }
+    #setup { color:#e7e5e4; font:16px/1.5 system-ui,sans-serif; max-width:30rem; margin:18vh auto 0; padding:0 1rem; text-align:center; }
+    #setup h1 { font-size:1.4rem; }
+    #open { margin-top:1rem; padding:.6rem 1.1rem; border:0; border-radius:.6rem; background:#6366f1; color:#fff; font:inherit; cursor:pointer; }
+  </style>
+</head>
+<body>
+  <iframe id="frame" hidden referrerpolicy="no-referrer"></iframe>
+  <div id="setup" hidden>
+    <h1>Tailboard Companion</h1>
+    <p>Set your Tailboard instance URL to use it as your new tab page.</p>
+    <button id="open">Open options</button>
+  </div>
+  <script type="module" src="newtab.js"></script>
+</body>
+</html>

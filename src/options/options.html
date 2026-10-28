@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tailboard Companion — Options</title>
+  <style>
+    :root { color-scheme: light dark; --bg:#fff; --fg:#1c1917; --sub:#78716c; --line:#e7e5e4; --accent:#6366f1; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#1c1917; --fg:#fafaf9; --sub:#a8a29e; --line:#292524; } }
+    body { font:15px/1.5 system-ui,sans-serif; background:var(--bg); color:var(--fg); max-width:34rem; margin:3rem auto; padding:0 1rem; }
+    h1 { font-size:1.3rem; }
+    label { display:block; font-weight:600; margin:1.2rem 0 .4rem; }
+    input { width:100%; padding:.6rem .7rem; border:1px solid var(--line); border-radius:.5rem; background:transparent; color:var(--fg); outline:none; }
+    input:focus { border-color:var(--accent); }
+    .hint { color:var(--sub); font-size:.85rem; margin-top:.3rem; }
+    button { margin-top:1.2rem; padding:.6rem 1.2rem; border:0; border-radius:.5rem; background:var(--accent); color:#fff; font:inherit; cursor:pointer; }
+    #status { margin-top:1rem; font-size:.9rem; color:var(--sub); min-height:1.2em; }
+  </style>
+</head>
+<body>
+  <h1>Tailboard Companion</h1>
+  <label for="url">Instance URL</label>
+  <input id="url" type="url" placeholder="http://localhost:3000" autocomplete="off">
+  <p class="hint">The base URL of your Tailboard instance. No trailing slash needed.</p>
+  <button id="save">Save</button>
+  <p id="status"></p>
+  <script type="module" src="options.js"></script>
+</body>
+</html>
