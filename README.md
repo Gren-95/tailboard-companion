@@ -1,5 +1,9 @@
 # Tailboard Companion
 
+[![CI](https://github.com/Gren-95/tailboard-companion/actions/workflows/ci.yml/badge.svg)](https://github.com/Gren-95/tailboard-companion/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Manifest V3](https://img.shields.io/badge/manifest-v3-informational)
+
 Browser extension (MV3, Firefox + Chrome) for the self-hosted [Tailboard](https://github.com/Gren-95/tailboard) dashboard.
 
 ## Features
@@ -40,3 +44,7 @@ src/
   options/           instance URL
   newtab/            new-tab page
 ```
+
+## License
+
+MIT — see [LICENSE](LICENSE).

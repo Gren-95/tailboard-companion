@@ -3,6 +3,16 @@
   "version": "0.1.0",
   "description": "Companion browser extension for the self-hosted Tailboard dashboard.",
   "private": true,
+  "license": "MIT",
+  "author": "Gren-95",
+  "homepage": "https://github.com/Gren-95/tailboard-companion",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Gren-95/tailboard-companion.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Gren-95/tailboard-companion/issues"
+  },
   "scripts": {
     "start:firefox": "web-ext run --source-dir .",
     "lint": "web-ext lint --source-dir .",

@@ -5,6 +5,31 @@ on:
     tags: ['v*']
 
 jobs:
+  github-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Set manifest version from tag
+        run: |
+          V="${GITHUB_REF_NAME#v}"
+          node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('manifest.json','utf8'));m.version=process.env.V;fs.writeFileSync('manifest.json',JSON.stringify(m,null,2)+'\n')"
+        env:
+          V: ${{ github.ref_name }}
+
+      - run: npx --yes web-ext@8 build --source-dir . --overwrite-dest
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: web-ext-artifacts/*.zip
+
   firefox:
     runs-on: ubuntu-latest
     steps:
