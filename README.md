@@ -6,6 +6,8 @@
 
 Browser extension (MV3, Firefox + Chrome) for the self-hosted [Tailboard](https://github.com/Gren-95/tailboard) dashboard.
 
+![The dashboard shown as the new-tab page](docs/screenshot.png)
+
 ## Features
 
 - New-tab page shows your Tailboard instance.
