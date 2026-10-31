@@ -1,18 +1,38 @@
-// Classic background script (no ES imports), so the data layer is inlined.
+// Classic background script (no ES imports), so the data + settings layer is inlined.
 
 const api = globalThis.browser ?? globalThis.chrome;
+const action = api.action ?? api.browserAction;
+
+const DEFAULTS = {
+  instanceUrl: '',
+  badgeMode: 'none',
+  refreshMinutes: 5,
+  openTarget: 'new',
+  showDots: true,
+  sortMode: 'group',
+  theme: 'auto',
+  contextMenu: true,
+};
+
+async function getSettings() {
+  const got = await api.storage.sync.get(Object.keys(DEFAULTS));
+  const s = { ...DEFAULTS, ...got };
+  s.instanceUrl    = String(s.instanceUrl || '').replace(/\/+$/, '');
+  s.refreshMinutes = Math.max(1, Number(s.refreshMinutes) || DEFAULTS.refreshMinutes);
+  return s;
+}
 
 async function getInstance() {
-  const { instanceUrl } = await api.storage.sync.get('instanceUrl');
-  return (instanceUrl || '').replace(/\/+$/, '');
+  return (await getSettings()).instanceUrl;
 }
 
 async function fetchData() {
   const base = await getInstance();
   if (!base) throw new Error('No instance URL set');
+  const opts = { credentials: 'include' };
   const [cfg, status] = await Promise.all([
-    fetch(`${base}/api/config`).then(r => { if (!r.ok) throw new Error(`config ${r.status}`); return r.json(); }),
-    fetch(`${base}/api/status`).then(r => (r.ok ? r.json() : {})).catch(() => ({})),
+    fetch(`${base}/api/config`, opts).then(r => { if (!r.ok) throw new Error(`config ${r.status}`); return r.json(); }),
+    fetch(`${base}/api/status`, opts).then(r => (r.ok ? r.json() : {})).catch(() => ({})),
   ]);
   const hidden = new Set(cfg.hiddenGroups || []);
   const groups = (cfg.groups || []).filter(g => !hidden.has(g.id)).map(g => ({
@@ -21,6 +41,7 @@ async function fetchData() {
       id: l.id, name: l.name, group: g.name,
       url: (status[l.id] && status[l.id].activeUrl) || l.url,
       status: (status[l.id] && status[l.id].status) || null,
+      pinned: !!l.pinned,
       tags: l.tags || [],
     })),
   }));
@@ -38,11 +59,34 @@ async function getCache() {
   return cache || null;
 }
 
+// Open a URL honouring the chosen target; forceBg overrides to a background tab.
+function openUrl(url, target, forceBg) {
+  if (forceBg || target === 'background') return api.tabs.create({ url, active: false });
+  if (target === 'current') return api.tabs.update({ url });
+  return api.tabs.create({ url });
+}
+
+// ─── Toolbar badge ──────────────────────────────────────────────────────────
+async function updateBadge(cache, settings) {
+  if (!action) return;
+  const s = settings || await getSettings();
+  if (s.badgeMode === 'none') { action.setBadgeText({ text: '' }); return; }
+  const links = cache ? cache.groups.flatMap(g => g.links) : [];
+  const n = links.filter(l => l.status === s.badgeMode).length;
+  action.setBadgeText({ text: n ? String(n) : '' });
+  action.setBadgeBackgroundColor?.({ color: s.badgeMode === 'up' ? '#16a34a' : '#dc2626' });
+  action.setBadgeTextColor?.({ color: '#ffffff' });
+}
+
+// ─── Context menus ────────────────────────────────────────────────────────────
 // Top entry opens the dashboard; groups become submenus of their links.
-async function rebuildMenus() {
+async function rebuildMenus(settings) {
   await api.contextMenus.removeAll();
+  const s = settings || await getSettings();
+  if (!s.contextMenu) return;
+
   api.contextMenus.create({ id: 'tb-root', title: 'Tailboard', contexts: ['all'] });
-  api.contextMenus.create({ id: 'tb-search', parentId: 'tb-root', title: 'Search dashboard', contexts: ['all'] });
+  api.contextMenus.create({ id: 'tb-search', parentId: 'tb-root', title: 'Open dashboard', contexts: ['all'] });
 
   const cache = await getCache();
   if (!cache || !cache.groups.length) {
@@ -61,26 +105,47 @@ async function rebuildMenus() {
 }
 
 async function refreshAndRebuild() {
-  try { await refreshCache(); } catch (_) { /* keep stale cache */ }
-  try { await rebuildMenus(); } catch (_) {}
+  const s = await getSettings();
+  let data = null;
+  try { data = await refreshCache(); } catch (_) { /* keep stale cache */ }
+  if (!data) data = await getCache();
+  try { await rebuildMenus(s); } catch (_) {}
+  try { await updateBadge(data, s); } catch (_) {}
 }
 
 api.runtime.onInstalled.addListener(refreshAndRebuild);
 api.runtime.onStartup.addListener(refreshAndRebuild);
 
-api.alarms.create('tb-refresh', { periodInMinutes: 5 });
+// ─── Refresh alarm (period from settings) ──────────────────────────────────────
+async function scheduleRefresh() {
+  const s = await getSettings();
+  api.alarms.create('tb-refresh', { periodInMinutes: s.refreshMinutes });
+}
+scheduleRefresh();
 api.alarms.onAlarm.addListener(a => { if (a.name === 'tb-refresh') refreshAndRebuild(); });
+
+// React to setting changes and popup cache writes without a restart.
+api.storage.onChanged.addListener(async (changes, area) => {
+  if (area === 'local' && changes.cache) {
+    try { await updateBadge(await getCache()); } catch (_) {}
+    return;
+  }
+  if (area !== 'sync') return;
+  if (changes.refreshMinutes) scheduleRefresh();
+  if (changes.contextMenu || changes.instanceUrl) { try { await rebuildMenus(); } catch (_) {} }
+  if (changes.badgeMode) { try { await updateBadge(await getCache()); } catch (_) {} }
+});
 
 api.contextMenus.onClicked.addListener(async info => {
   const id = info.menuItemId;
-  const base = await getInstance();
-  if (id === 'tb-search') { if (base) api.tabs.create({ url: `${base}/` }); return; }
+  const s = await getSettings();
+  if (id === 'tb-search') { if (s.instanceUrl) openUrl(`${s.instanceUrl}/`, s.openTarget); return; }
   if (id === 'tb-setup') { api.runtime.openOptionsPage(); return; }
   if (typeof id === 'string' && id.startsWith('tb-l-')) {
     const linkId = id.slice(5);
     const cache = await getCache();
     const link = cache && cache.groups.flatMap(g => g.links).find(l => l.id === linkId);
-    if (link) api.tabs.create({ url: link.url });
+    if (link) openUrl(link.url, s.openTarget);
   }
 });
 
@@ -110,6 +175,7 @@ if (api.omnibox) {
     })));
   });
   api.omnibox.onInputEntered.addListener(async (text, disposition) => {
+    const s = await getSettings();
     let url = text;
     if (!/^https?:\/\//i.test(text)) {
       const cache = await getCache();
@@ -117,8 +183,11 @@ if (api.omnibox) {
       if (!m) return;
       url = m.url;
     }
+    // Omnibox gives its own disposition; fall back to the configured target.
     if (disposition === 'currentTab') api.tabs.update({ url });
-    else api.tabs.create({ url });
+    else if (disposition === 'newForegroundTab') api.tabs.create({ url });
+    else if (disposition === 'newBackgroundTab') api.tabs.create({ url, active: false });
+    else openUrl(url, s.openTarget);
   });
 }
 

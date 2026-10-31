@@ -29,9 +29,6 @@
     "page": "src/options/options.html",
     "open_in_tab": true
   },
-  "chrome_url_overrides": {
-    "newtab": "src/newtab/newtab.html"
-  },
   "omnibox": { "keyword": "tb" },
   "commands": {
     "_execute_action": {

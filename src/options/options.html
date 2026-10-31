@@ -3,27 +3,88 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="../../icons/icon.svg">
   <title>Tailboard Companion — Options</title>
   <style>
     :root { color-scheme: light dark; --bg:#fff; --fg:#1c1917; --sub:#78716c; --line:#e7e5e4; --accent:#6366f1; }
     @media (prefers-color-scheme: dark) { :root { --bg:#1c1917; --fg:#fafaf9; --sub:#a8a29e; --line:#292524; } }
+    :root[data-theme="light"] { --bg:#fff; --fg:#1c1917; --sub:#78716c; --line:#e7e5e4; }
+    :root[data-theme="dark"]  { --bg:#1c1917; --fg:#fafaf9; --sub:#a8a29e; --line:#292524; }
     body { font:15px/1.5 system-ui,sans-serif; background:var(--bg); color:var(--fg); max-width:34rem; margin:3rem auto; padding:0 1rem; }
     h1 { font-size:1.3rem; }
     label { display:block; font-weight:600; margin:1.2rem 0 .4rem; }
-    input { width:100%; padding:.6rem .7rem; border:1px solid var(--line); border-radius:.5rem; background:transparent; color:var(--fg); outline:none; }
+    input[type="url"], input[type="number"] { width:100%; padding:.6rem .7rem; border:1px solid var(--line); border-radius:.5rem; background:transparent; color:var(--fg); outline:none; }
+    input[type="number"] { width:8rem; }
     input:focus { border-color:var(--accent); }
     .hint { color:var(--sub); font-size:.85rem; margin-top:.3rem; }
-    button { margin-top:1.2rem; padding:.6rem 1.2rem; border:0; border-radius:.5rem; background:var(--accent); color:#fff; font:inherit; cursor:pointer; }
+    button#save { margin-top:1.5rem; padding:.6rem 1.2rem; border:0; border-radius:.5rem; background:var(--accent); color:#fff; font:inherit; cursor:pointer; }
     #status { margin-top:1rem; font-size:.9rem; color:var(--sub); min-height:1.2em; }
+    .seg { display:flex; border:1px solid var(--line); border-radius:.5rem; overflow:hidden; margin-top:.2rem; }
+    .seg-btn { flex:1; margin:0; padding:.55rem .5rem; border:0; border-right:1px solid var(--line); border-radius:0; background:transparent; color:var(--fg); font:inherit; cursor:pointer; }
+    .seg-btn:last-child { border-right:0; }
+    .seg-btn[aria-checked="true"] { color:#fff; background:var(--accent); }
+    #badge .seg-btn[aria-checked="true"][data-val="none"] { background:var(--sub); }
+    #badge .seg-btn[aria-checked="true"][data-val="down"] { background:#dc2626; }
+    #badge .seg-btn[aria-checked="true"][data-val="up"]   { background:#16a34a; }
+    .row { display:flex; align-items:center; gap:.6rem; margin-top:1.2rem; }
+    .row input[type="checkbox"] { width:1.1rem; height:1.1rem; accent-color:var(--accent); }
+    .row label { margin:0; }
   </style>
 </head>
 <body>
   <h1>Tailboard Companion</h1>
+
   <label for="url">Instance URL</label>
   <input id="url" type="url" placeholder="http://localhost:3000" autocomplete="off">
   <p class="hint">The base URL of your Tailboard instance. No trailing slash needed.</p>
-  <button id="save">Save</button>
+
+  <label>Toolbar badge</label>
+  <div id="badge" class="seg" role="radiogroup" aria-label="Toolbar badge counter">
+    <button type="button" class="seg-btn" data-val="none" role="radio" aria-checked="false">None</button>
+    <button type="button" class="seg-btn" data-val="down" role="radio" aria-checked="false">Down (red)</button>
+    <button type="button" class="seg-btn" data-val="up" role="radio" aria-checked="false">Up (green)</button>
+  </div>
+  <p class="hint">Count on the toolbar icon: down services (red) or up services (green). Needs status data from the instance.</p>
+
+  <label for="refresh">Refresh interval (minutes)</label>
+  <input id="refresh" type="number" min="1" step="1" value="5">
+  <p class="hint">How often the background worker re-reads config and status. Minimum 1.</p>
+
+  <label>Open links in</label>
+  <div id="openTarget" class="seg" role="radiogroup" aria-label="Open links in">
+    <button type="button" class="seg-btn" data-val="new" role="radio" aria-checked="false">New tab</button>
+    <button type="button" class="seg-btn" data-val="current" role="radio" aria-checked="false">Current tab</button>
+    <button type="button" class="seg-btn" data-val="background" role="radio" aria-checked="false">Background</button>
+  </div>
+  <p class="hint">Ctrl/Cmd+click always opens in a background tab.</p>
+
+  <label>Popup sort order</label>
+  <div id="sortMode" class="seg" role="radiogroup" aria-label="Popup sort order">
+    <button type="button" class="seg-btn" data-val="group" role="radio" aria-checked="false">Group order</button>
+    <button type="button" class="seg-btn" data-val="pinned" role="radio" aria-checked="false">Pinned first</button>
+    <button type="button" class="seg-btn" data-val="alpha" role="radio" aria-checked="false">A–Z</button>
+  </div>
+
+  <label>Theme</label>
+  <div id="theme" class="seg" role="radiogroup" aria-label="Theme">
+    <button type="button" class="seg-btn" data-val="auto" role="radio" aria-checked="false">Auto</button>
+    <button type="button" class="seg-btn" data-val="light" role="radio" aria-checked="false">Light</button>
+    <button type="button" class="seg-btn" data-val="dark" role="radio" aria-checked="false">Dark</button>
+  </div>
+
+  <div class="row">
+    <input id="showDots" type="checkbox">
+    <label for="showDots">Show status dots in the popup</label>
+  </div>
+
+  <div class="row">
+    <input id="contextMenu" type="checkbox">
+    <label for="contextMenu">Enable right-click menu</label>
+  </div>
+
+  <button id="save">Save &amp; test connection</button>
   <p id="status"></p>
+
   <script type="module" src="options.js"></script>
 </body>
 </html>
